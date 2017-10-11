@@ -3470,6 +3470,21 @@ gf_is_loopback_localhost (const struct sockaddr *sa, char *hostname)
         return is_local;
 }
 
+static const gf_boolean_t
+_gf_is_pubnat_ip(const char *ip) {
+	static int checked=0;
+	static char *pubip=0;
+
+	if (!checked) {
+		pubip = getenv("GLUSTERD_PUBNAT_IP");
+		checked = 1;
+	}
+	if (!pubip)
+		return _gf_false;
+
+	return strcmp(ip, pubip) == 0;
+}
+
 gf_boolean_t
 gf_is_local_addr (char *hostname)
 {
@@ -3503,6 +3518,7 @@ gf_is_local_addr (char *hostname)
                               get_ip_from_addrinfo (res, &ip));
 
                 found = gf_is_loopback_localhost (res->ai_addr, hostname)
+                        || _gf_is_pubnat_ip(ip)
                         || gf_interface_search (ip);
                 if (found) {
                         GF_FREE (ip);
